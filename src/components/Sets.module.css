@@ -47,38 +47,38 @@
 
 .tallyMarks {
   display: flex;
-  gap: 30px;
+  flex-direction: column;
+  gap: 24px;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
 }
 
 .tallyGroup {
   position: relative;
   display: flex;
   align-items: center;
-  height: 120px;
+  justify-content: center;
 }
 
 .verticalMarks {
   display: flex;
-  gap: 8px;
+  gap: 12px;
+  height: 100px;
 }
 
 .tallyMark {
   width: 24px;
-  height: 100px;
+  height: 100%;
   color: var(--accent-green);
   filter: drop-shadow(0 0 2px rgba(0, 255, 136, 0.3));
 }
 
 .strikeThrough {
   position: absolute;
-  width: 110px;
-  height: 80px;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%) rotate(-25deg);
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
   color: var(--accent-green);
   filter: drop-shadow(0 0 3px rgba(0, 255, 136, 0.4));
   pointer-events: none;

@@ -12,7 +12,13 @@
     "test:watch": "vitest",
     "icons": "node scripts/generate-icons.js"
   },
-  "keywords": ["timer", "gym", "fitness", "pwa", "interval-training"],
+  "keywords": [
+    "timer",
+    "gym",
+    "fitness",
+    "pwa",
+    "interval-training"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
@@ -29,6 +35,7 @@
     "@vitejs/plugin-basic-ssl": "^2.1.0",
     "@vitejs/plugin-react": "^4.5.2",
     "jsdom": "^26.1.0",
+    "playwright": "^1.57.0",
     "sharp": "^0.34.5",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
