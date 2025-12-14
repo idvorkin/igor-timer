@@ -65,13 +65,16 @@ test-watch:
 icons:
     npm run icons
 
+# Deploy to surge.sh (production) - runs test and build first
+deploy: test build
+    npx surge dist igor-gym-timer.surge.sh
+
 # Deploy to surge.sh (staging)
 deploy-stage: test build
     npx surge dist igor-gym-timer-stage.surge.sh
 
-# Deploy to surge.sh (production)
-deploy-prod: test build
-    npx surge dist igor-gym-timer.surge.sh
+# Deploy to surge.sh (production) - alias for deploy
+deploy-prod: deploy
 
 # Clean build artifacts
 clean:
