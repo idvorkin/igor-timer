@@ -27,9 +27,9 @@ const BASE_URL = `${PROTOCOL}://localhost:${PORT}`;
 
 export default defineConfig({
   testDir: './e2e-tests',
-  timeout: 30 * 1000,
+  timeout: 10 * 1000,
   expect: {
-    timeout: 10 * 1000,
+    timeout: 5 * 1000,
   },
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
@@ -46,7 +46,7 @@ export default defineConfig({
     trace: 'retain-on-failure',
     video: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    actionTimeout: 30000,
+    actionTimeout: 5000,
     ignoreHTTPSErrors: useHttps,
   },
 
