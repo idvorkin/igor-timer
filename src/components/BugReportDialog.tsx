@@ -72,8 +72,32 @@ export function BugReportDialog() {
 							<span className={styles.metaValue}>{metadata.browser}</span>
 						</div>
 						<div className={styles.metaItem}>
-							<span className={styles.metaLabel}>Version</span>
-							<span className={styles.metaValue}>{metadata.version}</span>
+							<span className={styles.metaLabel}>Build</span>
+							<span className={styles.metaValue}>
+								{metadata.commitUrl ? (
+									<a href={metadata.commitUrl} target="_blank" rel="noopener noreferrer" className={styles.metaLink}>
+										{metadata.version}
+									</a>
+								) : (
+									metadata.version
+								)}
+							</span>
+						</div>
+						<div className={styles.metaItem}>
+							<span className={styles.metaLabel}>Branch</span>
+							<span className={styles.metaValue}>
+								{metadata.repoUrl ? (
+									<a href={metadata.repoUrl} target="_blank" rel="noopener noreferrer" className={styles.metaLink}>
+										{metadata.branch}
+									</a>
+								) : (
+									metadata.branch
+								)}
+							</span>
+						</div>
+						<div className={styles.metaItem}>
+							<span className={styles.metaLabel}>Built</span>
+							<span className={styles.metaValue}>{metadata.buildTime}</span>
 						</div>
 						<div className={styles.metaItem}>
 							<span className={styles.metaLabel}>Session</span>
