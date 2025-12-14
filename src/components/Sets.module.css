@@ -3,39 +3,20 @@
   background: var(--bg-dark);
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
-  padding: 40px 20px;
-  gap: 20px;
-}
-
-.countNumber {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: clamp(48px, 15vw, 96px);
-  color: var(--text-muted);
-  letter-spacing: 4px;
-}
-
-.tallyContainer {
-  min-height: 150px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 24px 20px;
+  gap: 16px;
   cursor: pointer;
-  padding: 20px;
-  border-radius: 16px;
   transition: background 0.2s;
-  width: 100%;
-  max-width: 400px;
 }
 
-.tallyContainer:hover {
+.setsDisplay:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.setsDisplay:active {
   background: rgba(255, 255, 255, 0.05);
-}
-
-.tallyContainer:active {
-  background: rgba(255, 255, 255, 0.1);
-  transform: scale(0.98);
 }
 
 .placeholder {
@@ -43,14 +24,16 @@
   font-size: 18px;
   color: var(--text-muted);
   letter-spacing: 2px;
+  margin-top: 40px;
 }
 
 .tallyMarks {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  width: 100%;
 }
 
 .tallyGroup {

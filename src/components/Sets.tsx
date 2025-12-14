@@ -108,7 +108,7 @@ function TallyGroup({ count, groupIndex }: TallyGroupProps) {
 }
 
 export function Sets() {
-	const { state, increment, undo, reset } = useSets(10);
+	const { state, increment, undo, reset } = useSets(15);
 	const { count, maxCount } = state;
 
 	// Split count into groups of 5
@@ -127,25 +127,22 @@ export function Sets() {
 
 	return (
 		<>
-			<div className={styles.setsDisplay}>
-				<div className={styles.countNumber}>{count}</div>
-				<div
-					className={styles.tallyContainer}
-					onClick={!isMaxed ? increment : undefined}
-					role="button"
-					tabIndex={0}
-					onKeyDown={(e) => {
-						if (e.code === "Space" || e.code === "Enter") {
-							if (!isMaxed) increment();
-						}
-					}}
-				>
-					{count === 0 ? (
-						<div className={styles.placeholder}>TAP TO COUNT</div>
-					) : (
-						<div className={styles.tallyMarks}>{groups}</div>
-					)}
-				</div>
+			<div
+				className={styles.setsDisplay}
+				onClick={!isMaxed ? increment : undefined}
+				role="button"
+				tabIndex={0}
+				onKeyDown={(e) => {
+					if (e.code === "Space" || e.code === "Enter") {
+						if (!isMaxed) increment();
+					}
+				}}
+			>
+				{count === 0 ? (
+					<div className={styles.placeholder}>TAP TO COUNT</div>
+				) : (
+					<div className={styles.tallyMarks}>{groups}</div>
+				)}
 				{isMaxed && (
 					<div className={styles.maxedOut}>MAX REACHED!</div>
 				)}
