@@ -69,7 +69,7 @@ class AudioService {
 						cleanup();
 					}
 				} catch (error) {
-					console.warn("AudioContext unlock attempt failed:", error);
+					console.error("AudioContext unlock attempt failed:", error);
 				}
 			}
 		};
@@ -110,7 +110,7 @@ class AudioService {
 			try {
 				await this.unlockPromise;
 			} catch (error) {
-				console.warn("AudioContext resume failed:", error);
+				console.error("AudioContext resume failed:", error);
 			}
 		}
 
@@ -127,22 +127,38 @@ class AudioService {
 		type: OscillatorType = "sine",
 		volume = 0.7,
 	): void {
-		// Fire-and-forget pattern - we try to ensure running but don't block
-		// This works because the first beep is always triggered by user gesture
 		const ctx = this.getContext();
 		const state = ctx.state as AudioContextState;
 
-		// Try to resume if needed (within user gesture context)
+		// If context needs resuming, await it before playing
+		// This is critical - resume() is async and we must wait for it
 		if (state === "suspended" || state === "interrupted") {
-			ctx.resume().catch(() => {
-				// Silent fail - will retry on next beep
-			});
+			ctx.resume()
+				.then(() => this.doPlayBeep(ctx, frequency, duration, type, volume))
+				.catch((error) => {
+					console.error("AudioContext resume failed in playBeep:", error);
+				});
+			return;
 		}
 
-		// Only play if context is running
+		// Context already running - play immediately
+		if (ctx.state === "running") {
+			this.doPlayBeep(ctx, frequency, duration, type, volume);
+		}
+	}
+
+	/**
+	 * Internal method to actually play the beep
+	 */
+	private doPlayBeep(
+		ctx: AudioContext,
+		frequency: number,
+		duration: number,
+		type: OscillatorType,
+		volume: number,
+	): void {
+		// Double-check context is still valid and running
 		if (ctx.state !== "running") {
-			// Context not ready - this can happen on very first load
-			// The unlock listeners will handle it, and next beep will work
 			return;
 		}
 
@@ -161,7 +177,7 @@ class AudioService {
 			oscillator.start(ctx.currentTime);
 			oscillator.stop(ctx.currentTime + duration);
 		} catch (error) {
-			console.warn("Audio playback failed:", error);
+			console.error("Audio playback failed:", error);
 			// If playback fails, destroy context so it gets recreated
 			if (this.context) {
 				try {
