@@ -51,7 +51,7 @@ export function useTimer(profile: TimerProfile) {
 		profileRef.current = profile;
 	});
 
-	const { initAudio, playStartBeep, playEndBeep, playCountdownBeep, playFinishBeep } = useAudio();
+	const { playStartBeep, playEndBeep, playCountdownBeep, playFinishBeep } = useAudio();
 
 	const calculateTotalTime = useCallback(() => {
 		return ((profile.workTime + profile.restTime) * profile.rounds * profile.cycles) + profile.prepTime;
@@ -148,8 +148,6 @@ export function useTimer(profile: TimerProfile) {
 	}, [playCountdownBeep, playStartBeep, playEndBeep, playFinishBeep, clearTimer]);
 
 	const start = useCallback(() => {
-		initAudio();
-
 		const currentState = stateRef.current;
 
 		let newState: TimerState;
@@ -177,7 +175,7 @@ export function useTimer(profile: TimerProfile) {
 		// Clear any existing interval first
 		clearTimer();
 		intervalRef.current = window.setInterval(tick, 1000);
-	}, [initAudio, playStartBeep, tick, clearTimer]);
+	}, [playStartBeep, tick, clearTimer]);
 
 	const pause = useCallback(() => {
 		clearTimer();
