@@ -32,6 +32,11 @@ npm-debug.log*
 # Test coverage
 coverage/
 
+# Generated files
+src/generated_version.ts
+vite.config.js
+vite.config.d.ts
+
 # Screenshots
 screenshot.mjs
 *.png
