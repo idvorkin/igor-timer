@@ -24,7 +24,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@idvorkin/pwa-utils": "file:../pwa-utils",
+    "@idvorkin/pwa-utils": "github:idvorkin-ai-tools/pwa-utils",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
