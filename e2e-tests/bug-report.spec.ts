@@ -36,7 +36,9 @@ test.describe('Bug Report Dialog', () => {
     await expect(page.locator('text=DEVICE')).toBeVisible();
     await expect(page.locator('text=SCREEN')).toBeVisible();
     await expect(page.locator('text=BROWSER')).toBeVisible();
-    await expect(page.locator('text=VERSION')).toBeVisible();
+    await expect(page.locator('text=BUILD')).toBeVisible();
+    await expect(page.locator('text=BRANCH')).toBeVisible();
+    await expect(page.locator('text=BUILT')).toBeVisible();
     await expect(page.locator('text=SESSION')).toBeVisible();
     await expect(page.locator('text=CLICKS')).toBeVisible();
   });

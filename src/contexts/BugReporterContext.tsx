@@ -15,6 +15,10 @@ export interface BugReportMetadata {
 	screen: string;
 	browser: string;
 	version: string;
+	branch: string;
+	buildTime: string;
+	commitUrl: string;
+	repoUrl: string;
 	sessionDuration: string;
 	interactions: number;
 	errors: number;
@@ -100,11 +104,20 @@ export function BugReporterProvider({ children }: { children: ReactNode }) {
 			? `${durationMin}m ${durationSec % 60}s`
 			: `${durationSec}s`;
 
+		// Format build time as relative or short date
+		const buildTime = versionInfo?.buildTimestamp
+			? formatBuildTime(versionInfo.buildTimestamp)
+			: "unknown";
+
 		return {
 			device: String(meta.platform || "Unknown"),
 			screen: `${meta.screenWidth}×${meta.screenHeight}`,
 			browser: extractBrowser(String(meta.userAgent || "")),
 			version: versionInfo?.shaShort || "dev",
+			branch: versionInfo?.branch || "unknown",
+			buildTime,
+			commitUrl: versionInfo?.commitUrl || "",
+			repoUrl: versionInfo?.currentUrl || "",
 			sessionDuration: durationStr,
 			interactions: stats.interactions,
 			errors: stats.errors,
@@ -144,4 +157,17 @@ function extractBrowser(userAgent: string): string {
 	if (userAgent.includes("Firefox")) return "Firefox";
 	if (userAgent.includes("Safari")) return "Safari";
 	return "Unknown";
+}
+
+function formatBuildTime(timestamp: string): string {
+	const date = new Date(timestamp);
+	const now = new Date();
+	const diffMs = now.getTime() - date.getTime();
+	const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+	if (diffDays === 0) return "today";
+	if (diffDays === 1) return "yesterday";
+	if (diffDays < 7) return `${diffDays}d ago`;
+
+	return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
