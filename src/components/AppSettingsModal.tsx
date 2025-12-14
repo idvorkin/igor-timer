@@ -96,13 +96,17 @@ export function AppSettingsModal({ isOpen, onClose }: AppSettingsModalProps) {
 							type="button"
 							className={styles.reportBtn}
 							onClick={() => {
-								const blob = sessionRecorder.getRecordingAsBlob();
-								const url = URL.createObjectURL(blob);
-								const a = document.createElement("a");
-								a.href = url;
-								a.download = `session-${Date.now()}.json`;
-								a.click();
-								URL.revokeObjectURL(url);
+								try {
+									const blob = sessionRecorder.getRecordingAsBlob();
+									const url = URL.createObjectURL(blob);
+									const a = document.createElement("a");
+									a.href = url;
+									a.download = `session-${Date.now()}.json`;
+									a.click();
+									URL.revokeObjectURL(url);
+								} catch (error) {
+									console.error("Failed to download session recording:", error);
+								}
 							}}
 						>
 							Download Session Recording
