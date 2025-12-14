@@ -4,6 +4,7 @@ import { Controls } from "./components/Controls";
 import { Header } from "./components/Header";
 import { PresetSelector, type Preset } from "./components/PresetSelector";
 import { SettingsModal } from "./components/SettingsModal";
+import { Stopwatch } from "./components/Stopwatch";
 import { TimerDisplay } from "./components/TimerDisplay";
 import { type TimerProfile, useTimer } from "./hooks/useTimer";
 
@@ -105,7 +106,7 @@ export default function App() {
 				onSelect={handlePresetSelect}
 			/>
 
-			{mode === "rounds" && (
+			{mode === "rounds" ? (
 				<>
 					<TimerDisplay
 						phase={state.phase}
@@ -122,6 +123,8 @@ export default function App() {
 						onToggle={toggle}
 					/>
 				</>
+			) : (
+				<Stopwatch />
 			)}
 
 			<BottomNav activeMode={mode} onModeChange={setMode} />

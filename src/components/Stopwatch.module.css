@@ -1,0 +1,134 @@
+.stopwatchDisplay {
+  flex: 1;
+  background: var(--bg-dark);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+}
+
+.stopwatchTime {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(60px, 18vw, 120px);
+  color: var(--text-light);
+  letter-spacing: 2px;
+}
+
+.stopwatchMs {
+  font-size: clamp(30px, 8vw, 48px);
+  color: var(--accent-green);
+}
+
+.lapList {
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 20px;
+}
+
+.lapItem {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 16px;
+}
+
+.lapNumber {
+  color: var(--text-muted);
+}
+
+.lapTime {
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.controlsSection {
+  background: var(--bg-dark);
+  padding: 24px 20px;
+}
+
+.statsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.centerControl {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.playBtn {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 4px solid var(--accent-green);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.playBtn:hover {
+  transform: scale(1.05);
+}
+
+.playBtn:active {
+  transform: scale(0.95);
+}
+
+.playIcon {
+  width: 32px;
+  height: 32px;
+  fill: var(--accent-green);
+}
+
+.stopIcon {
+  width: 28px;
+  height: 28px;
+  background: var(--accent-green);
+  border-radius: 4px;
+}
+
+.btnLabel {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 8px;
+}
+
+.roundBtn {
+  flex: 1;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 12px;
+  color: var(--text-light);
+  font-family: 'Oswald', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.roundBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.roundBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.roundBtn.reset {
+  background: var(--rest-color);
+}
