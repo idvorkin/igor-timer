@@ -1,4 +1,6 @@
 import { useBugReporter } from "../contexts/BugReporterContext";
+import { audioService } from "../services/audioService";
+import { sessionRecorder } from "../services/pwaDebugServices";
 import { AboutSection } from "./AboutSection";
 import styles from "./SettingsModal.module.css";
 
@@ -72,6 +74,38 @@ export function AppSettingsModal({ isOpen, onClose }: AppSettingsModalProps) {
 							}}
 						>
 							Report a Bug
+						</button>
+					</div>
+
+					{/* Debug Section */}
+					<div className={styles.section}>
+						<h3 className={styles.sectionTitle}>Debug</h3>
+
+						<div className={styles.settingRow}>
+							<span className={styles.settingLabel}>Audio: {audioService.getState().state ?? "not initialized"}</span>
+							<button
+								type="button"
+								className={styles.toggle}
+								onClick={() => audioService.testSound()}
+							>
+								Test
+							</button>
+						</div>
+
+						<button
+							type="button"
+							className={styles.reportBtn}
+							onClick={() => {
+								const blob = sessionRecorder.getRecordingAsBlob();
+								const url = URL.createObjectURL(blob);
+								const a = document.createElement("a");
+								a.href = url;
+								a.download = `session-${Date.now()}.json`;
+								a.click();
+								URL.revokeObjectURL(url);
+							}}
+						>
+							Download Session Recording
 						</button>
 					</div>
 

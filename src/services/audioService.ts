@@ -20,6 +20,7 @@
 
 type AudioContextState = "suspended" | "running" | "closed" | "interrupted";
 
+
 class AudioService {
 	private context: AudioContext | null = null;
 	private unlockPromise: Promise<void> | null = null;
@@ -196,6 +197,61 @@ class AudioService {
 	 */
 	prime(): void {
 		this.getContext();
+	}
+
+	/**
+	 * Test sound - plays a recognizable beep and logs diagnostic info
+	 * Useful for debugging audio issues on iOS
+	 */
+	testSound(): { state: string; played: boolean; error?: string } {
+		const ctx = this.getContext();
+		const initialState = ctx.state;
+
+		console.log("[AudioService] Test sound requested", {
+			contextState: initialState,
+			contextExists: !!this.context,
+		});
+
+		try {
+			// Try to play immediately if running
+			if (ctx.state === "running") {
+				this.doPlayBeep(ctx, 440, 0.3, "sine", 0.8); // A4 note, 300ms
+				console.log("[AudioService] Test sound played successfully");
+				return { state: initialState, played: true };
+			}
+
+			// Try to resume and play
+			ctx.resume()
+				.then(() => {
+					console.log("[AudioService] Context resumed, state:", ctx.state);
+					if (ctx.state === "running") {
+						this.doPlayBeep(ctx, 440, 0.3, "sine", 0.8);
+						console.log("[AudioService] Test sound played after resume");
+					} else {
+						console.error("[AudioService] Context not running after resume:", ctx.state);
+					}
+				})
+				.catch((error) => {
+					console.error("[AudioService] Resume failed during test:", error);
+				});
+
+			return { state: initialState, played: false, error: "Resuming context..." };
+		} catch (error) {
+			const errorMsg = error instanceof Error ? error.message : String(error);
+			console.error("[AudioService] Test sound failed:", errorMsg);
+			return { state: initialState, played: false, error: errorMsg };
+		}
+	}
+
+	/**
+	 * Get current audio context state for diagnostics
+	 */
+	getState(): { contextExists: boolean; state: string | null; unlockListenersAttached: boolean } {
+		return {
+			contextExists: !!this.context,
+			state: this.context?.state ?? null,
+			unlockListenersAttached: this.unlockListenersAttached,
+		};
 	}
 }
 
