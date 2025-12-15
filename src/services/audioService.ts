@@ -92,6 +92,7 @@ class AudioService {
 	private unlockPromise: Promise<void> | null = null;
 	private unlockListenersAttached = false;
 	private visibilityListenerAttached = false;
+	private resumeInProgress = false; // Prevent parallel resume() calls
 
 	/**
 	 * Get or create the global AudioContext
@@ -103,12 +104,31 @@ class AudioService {
 				(window as unknown as { webkitAudioContext: typeof AudioContext })
 					.webkitAudioContext;
 			this.context = new AudioContextClass();
+			recordAudioEvent("audio:context_created", { state: this.context.state });
 
 			// Set up auto-unlock listeners on creation
 			this.setupUnlockListeners();
 			this.setupVisibilityListener();
 		}
 		return this.context;
+	}
+
+	/**
+	 * Destroy context so it can be recreated fresh
+	 * Used when iOS audio device fails and context is unrecoverable
+	 */
+	private destroyContext(): void {
+		if (this.context) {
+			recordAudioEvent("audio:context_closed", { reason: "destroyed_for_recovery" });
+			try {
+				this.context.close();
+			} catch {
+				// Ignore close errors
+			}
+			this.context = null;
+			this.unlockPromise = null;
+			this.resumeInProgress = false;
+		}
 	}
 
 	/**
@@ -123,10 +143,25 @@ class AudioService {
 			if (document.visibilityState === "visible" && this.context) {
 				const state = this.context.state as AudioContextState;
 				if (state === "interrupted" || state === "suspended") {
+					// Skip if another resume is already in progress (prevents cascade)
+					if (this.resumeInProgress) {
+						return;
+					}
+					this.resumeInProgress = true;
 					recordAudioEvent("audio:resuming", { trigger: "visibility", fromState: state });
 					withTimeout(this.context.resume(), RESUME_TIMEOUT_MS, "Resume timeout (visibility)")
 						.then(() => recordAudioResumed(this.context?.state ?? "unknown"))
-						.catch((err) => recordAudioResumeFailed(String(err), state));
+						.catch((err) => {
+							recordAudioResumeFailed(String(err), state);
+							// If audio device failed, destroy context for recovery
+							const errorMsg = String(err);
+							if (errorMsg.includes("Failed to start") || errorMsg.includes("audio device")) {
+								this.destroyContext();
+							}
+						})
+						.finally(() => {
+							this.resumeInProgress = false;
+						});
 				}
 			}
 		});
@@ -152,9 +187,15 @@ class AudioService {
 				return;
 			}
 
+			// Skip if another resume is already in progress (prevents cascade)
+			if (this.resumeInProgress) {
+				return;
+			}
+
 			// Try to resume on suspended or interrupted
 			if (state === "suspended" || state === "interrupted") {
 				try {
+					this.resumeInProgress = true;
 					recordAudioEvent("audio:resuming", { trigger: "gesture", fromState: state });
 					await withTimeout(ctx.resume(), RESUME_TIMEOUT_MS, "Resume timeout (gesture)");
 					recordAudioResumed(ctx.state);
@@ -162,7 +203,13 @@ class AudioService {
 				} catch (error) {
 					const errorMsg = error instanceof Error ? error.message : String(error);
 					recordAudioResumeFailed(errorMsg, state);
+					// If audio device failed, destroy context so it gets recreated
+					if (errorMsg.includes("Failed to start") || errorMsg.includes("audio device")) {
+						this.destroyContext();
+					}
 					// Will retry on next gesture
+				} finally {
+					this.resumeInProgress = false;
 				}
 			}
 		};
@@ -190,25 +237,31 @@ class AudioService {
 			recordAudioEvent("audio:resuming", { trigger: "ensureRunning", fromState: state });
 			// Reuse existing unlock promise if one is in progress
 			if (!this.unlockPromise) {
+				this.resumeInProgress = true;
 				this.unlockPromise = withTimeout(
 					ctx.resume(),
 					RESUME_TIMEOUT_MS,
 					"Resume timeout (ensureRunning)"
 				).finally(() => {
 					this.unlockPromise = null;
+					this.resumeInProgress = false;
 				});
 			}
 
 			try {
 				await this.unlockPromise;
-				recordAudioResumed(ctx.state);
+				recordAudioResumed(this.context?.state ?? "unknown");
 			} catch (error) {
 				const errorMsg = error instanceof Error ? error.message : String(error);
 				recordAudioResumeFailed(errorMsg, state);
+				// If audio device failed, destroy context so it gets recreated on next attempt
+				if (errorMsg.includes("Failed to start") || errorMsg.includes("audio device")) {
+					this.destroyContext();
+				}
 			}
 		}
 
-		return ctx;
+		return this.getContext(); // Return fresh context if destroyed
 	}
 
 	/**
@@ -227,7 +280,13 @@ class AudioService {
 		// If context needs resuming, await it before playing
 		// This is critical - resume() is async and we must wait for it
 		if (state === "suspended" || state === "interrupted") {
+			// Skip if resume already in progress (will be handled by that call)
+			if (this.resumeInProgress) {
+				recordAudioPlaySkipped("resume_in_progress", state);
+				return;
+			}
 			recordAudioResuming(state);
+			this.resumeInProgress = true;
 			withTimeout(ctx.resume(), RESUME_TIMEOUT_MS, "Resume timeout (playBeep)")
 				.then(() => {
 					recordAudioResumed(ctx.state);
@@ -236,6 +295,13 @@ class AudioService {
 				.catch((error) => {
 					const errorMsg = error instanceof Error ? error.message : String(error);
 					recordAudioResumeFailed(errorMsg, state);
+					// If audio device failed, destroy context for recovery
+					if (errorMsg.includes("Failed to start") || errorMsg.includes("audio device")) {
+						this.destroyContext();
+					}
+				})
+				.finally(() => {
+					this.resumeInProgress = false;
 				});
 			return;
 		}
@@ -284,14 +350,7 @@ class AudioService {
 			const errorMsg = error instanceof Error ? error.message : String(error);
 			recordAudioError(errorMsg, frequency);
 			// If playback fails, destroy context so it gets recreated
-			if (this.context) {
-				try {
-					this.context.close();
-				} catch {
-					// Ignore close errors
-				}
-				this.context = null;
-			}
+			this.destroyContext();
 		}
 	}
 
@@ -309,20 +368,33 @@ class AudioService {
 	 * Returns a promise that resolves when the sound has been played (or failed)
 	 */
 	async testSound(): Promise<{ state: string; played: boolean; error?: string }> {
-		const ctx = this.getContext();
+		let ctx = this.getContext();
 		const initialState = ctx.state;
 
 		recordAudioEvent("audio:test_requested", {
 			initialState,
 			contextExists: !!this.context,
+			resumeInProgress: this.resumeInProgress,
 		});
 
 		try {
 			// Resume if needed and wait for it (with timeout - iOS can hang)
 			if (ctx.state !== "running") {
-				recordAudioResuming(ctx.state);
-				await withTimeout(ctx.resume(), RESUME_TIMEOUT_MS, "Resume timeout (testSound)");
-				recordAudioResumed(ctx.state);
+				// If resume already in progress, wait for it instead of starting another
+				if (this.unlockPromise) {
+					await this.unlockPromise;
+				} else {
+					this.resumeInProgress = true;
+					recordAudioResuming(ctx.state);
+					try {
+						await withTimeout(ctx.resume(), RESUME_TIMEOUT_MS, "Resume timeout (testSound)");
+						recordAudioResumed(ctx.state);
+					} finally {
+						this.resumeInProgress = false;
+					}
+				}
+				// Re-get context in case it was destroyed during resume
+				ctx = this.getContext();
 			}
 
 			// Now try to play
@@ -343,6 +415,10 @@ class AudioService {
 				error: errorMsg,
 				initialState
 			});
+			// If audio device failed, destroy context for recovery on next attempt
+			if (errorMsg.includes("Failed to start") || errorMsg.includes("audio device")) {
+				this.destroyContext();
+			}
 			return { state: initialState, played: false, error: errorMsg };
 		}
 	}

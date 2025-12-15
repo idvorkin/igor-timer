@@ -76,7 +76,7 @@ describe("App", () => {
 		const user = userEvent.setup();
 		renderApp();
 
-		await user.click(screen.getByLabelText("Settings"));
+		await user.click(screen.getByLabelText("App Settings"));
 
 		expect(screen.getByText("SETTINGS")).toBeInTheDocument();
 		expect(screen.getByText("Igor Timer")).toBeInTheDocument();

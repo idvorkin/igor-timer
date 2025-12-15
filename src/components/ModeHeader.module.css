@@ -4,23 +4,19 @@
   justify-content: space-between;
   padding: 12px 16px;
   background: var(--bg-darker);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.spacer {
-  width: 40px;
 }
 
 .title {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 18px;
+  font-family: 'Oswald', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text-muted);
-  letter-spacing: 2px;
+  letter-spacing: 1px;
 }
 
 .settingsBtn {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border: none;
   background: transparent;
   color: var(--text-muted);
@@ -38,6 +34,6 @@
 }
 
 .settingsBtn svg {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
 }

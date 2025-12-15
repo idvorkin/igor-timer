@@ -1,9 +1,41 @@
+.presetRow {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--bg-darker);
+  gap: 12px;
+}
+
 .presetBubbles {
   display: flex;
   gap: 10px;
-  padding: 12px 16px;
-  background: var(--bg-darker);
+  flex: 1;
   justify-content: center;
+}
+
+.settingsBtn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.settingsBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-light);
+}
+
+.settingsBtn svg {
+  width: 20px;
+  height: 20px;
 }
 
 .presetBtn {

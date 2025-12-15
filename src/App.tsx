@@ -3,7 +3,7 @@ import { AppSettingsModal } from "./components/AppSettingsModal";
 import { BottomNav, type Mode } from "./components/BottomNav";
 import { BugReportDialog } from "./components/BugReportDialog";
 import { Controls } from "./components/Controls";
-import { GlobalHeader } from "./components/GlobalHeader";
+import { ModeHeader } from "./components/ModeHeader";
 import { PresetSelector, type Preset } from "./components/PresetSelector";
 import { Sets } from "./components/Sets";
 import { TimerSettingsModal } from "./components/SettingsModal";
@@ -105,7 +105,6 @@ export default function App() {
 		<>
 			<UpdateBanner />
 			<BugReportDialog />
-			<GlobalHeader onSettingsClick={() => setIsAppSettingsOpen(true)} />
 
 			{mode === "rounds" && (
 				<>
@@ -120,6 +119,7 @@ export default function App() {
 						presets={PRESETS}
 						activePreset={activePreset}
 						onSelect={handlePresetSelect}
+						onSettingsClick={() => setIsAppSettingsOpen(true)}
 					/>
 
 					<TimerDisplay
@@ -138,8 +138,18 @@ export default function App() {
 					/>
 				</>
 			)}
-			{mode === "stopwatch" && <Stopwatch />}
-			{mode === "sets" && <Sets />}
+			{mode === "stopwatch" && (
+				<>
+					<ModeHeader title="STOPWATCH" onSettingsClick={() => setIsAppSettingsOpen(true)} />
+					<Stopwatch />
+				</>
+			)}
+			{mode === "sets" && (
+				<>
+					<ModeHeader title="SET COUNTER" onSettingsClick={() => setIsAppSettingsOpen(true)} />
+					<Sets />
+				</>
+			)}
 
 			<BottomNav activeMode={mode} onModeChange={setMode} />
 
