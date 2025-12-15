@@ -97,64 +97,11 @@ just deploy      # Deploy to surge.sh
 
 ### iOS Audio Architecture
 
-iOS Safari has strict audio requirements. The `audioService` handles all edge cases.
-
-#### AudioContext States
-
-| State | Meaning | Can Play? |
-|-------|---------|-----------|
-| `suspended` | Default on iOS - waiting for user gesture | No |
-| `running` | Active and processing audio | Yes |
-| `interrupted` | iOS paused audio (call, Siri, tab switch) | No |
-| `closed` | Destroyed, cannot recover | No |
-
-#### Unlock Mechanisms (3 layers of defense)
-
-1. **User Gesture Listeners** - Every tap/click/keydown attempts `resume()`
-   - Listeners stay attached forever (don't remove after success)
-   - iOS can re-interrupt at any time, so we retry on every gesture
-
-2. **Visibility Change Listener** - When user returns to tab
-   - iOS sets `interrupted` on tab switch
-   - Auto-resume when `visibilityState === "visible"`
-
-3. **Timer Start Hook** - `useTimer.start()` calls `ensureRunning()`
-   - Critical: MUST happen during the click gesture
-   - Timer intervals run outside gesture context, so unlock first
-
-#### Timeout Handling
-
-iOS Safari `resume()` can hang forever. All resume calls use `withTimeout()`:
-
-```typescript
-withTimeout(ctx.resume(), 3000, "Resume timeout (iOS hung)")
-```
-
-Session recording will show `audio:resume_failed` with timeout error instead of hanging forever.
-
-#### Known iOS Quirks
-
-| Issue | Behavior | Mitigation |
-|-------|----------|------------|
-| Silent switch | Mutes all Web Audio | Can't detect - user must check |
-| Phone calls | `interrupted`, `resume()` fails until call ends | Retry on next gesture |
-| Tab switch | May go `interrupted` | Visibility listener auto-resumes |
-| `resume()` hangs | Promise never resolves | 3-second timeout |
-| Safari limit | Max 4 AudioContext per page | Single shared instance |
-
-#### Audio Event Types (for debugging)
-
-| Event Type | Trigger | Details |
-|------------|---------|---------|
-| `audio:resuming` | Starting resume | `{trigger: "gesture"|"visibility", fromState}` |
-| `audio:resumed` | Resume succeeded | `{newState}` |
-| `audio:resume_failed` | Resume failed/timeout | `{error, fromState}` |
-| `audio:played` | Beep played | `{frequency, state}` |
-| `audio:play_skipped` | Couldn't play | `{reason, state}` |
-| `audio:play_error` | Oscillator failed | `{error, frequency}` |
-| `audio:test_requested` | Test button clicked | `{initialState, contextExists}` |
-| `audio:test_played` | Test succeeded | `{state}` |
-| `audio:test_failed` | Test failed | `{error, reason}` |
+iOS Safari has strict audio requirements. See **[tech/ios-audio-workaround.md](tech/ios-audio-workaround.md)** for full documentation including:
+- AudioContext states and unlock mechanisms
+- Timeout handling for hung `resume()` calls
+- Known iOS quirks and mitigations
+- Audio event types for debugging
 
 ---
 
