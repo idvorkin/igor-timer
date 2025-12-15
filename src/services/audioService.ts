@@ -187,6 +187,7 @@ class AudioService {
 
 		// Handle suspended or interrupted states
 		if (state === "suspended" || state === "interrupted") {
+			recordAudioEvent("audio:resuming", { trigger: "ensureRunning", fromState: state });
 			// Reuse existing unlock promise if one is in progress
 			if (!this.unlockPromise) {
 				this.unlockPromise = withTimeout(
@@ -200,6 +201,7 @@ class AudioService {
 
 			try {
 				await this.unlockPromise;
+				recordAudioResumed(ctx.state);
 			} catch (error) {
 				const errorMsg = error instanceof Error ? error.message : String(error);
 				recordAudioResumeFailed(errorMsg, state);
@@ -226,7 +228,7 @@ class AudioService {
 		// This is critical - resume() is async and we must wait for it
 		if (state === "suspended" || state === "interrupted") {
 			recordAudioResuming(state);
-			ctx.resume()
+			withTimeout(ctx.resume(), RESUME_TIMEOUT_MS, "Resume timeout (playBeep)")
 				.then(() => {
 					recordAudioResumed(ctx.state);
 					this.doPlayBeep(ctx, frequency, duration, type, volume);
