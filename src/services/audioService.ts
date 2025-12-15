@@ -35,7 +35,8 @@ type AudioEventType =
 	| "audio:context_closed"
 	| "audio:test_requested"
 	| "audio:test_played"
-	| "audio:test_failed";
+	| "audio:test_failed"
+	| "audio:silent_warmup";
 
 // Helper to record audio events to session recorder
 function recordAudioEvent(type: AudioEventType, details?: Record<string, unknown>): void {
@@ -60,6 +61,28 @@ function withTimeout<T>(promise: Promise<T>, ms: number, errorMsg: string): Prom
 			setTimeout(() => reject(new Error(errorMsg)), ms)
 		),
 	]);
+}
+
+/**
+ * Play a silent buffer to "warm up" the AudioContext on iOS Safari
+ * iOS requires actual audio playback (not just resume()) to unlock the context
+ * This is the proven pattern used by Howler.js and other audio libraries
+ */
+function playSilentBuffer(ctx: AudioContext): void {
+	try {
+		const buffer = ctx.createBuffer(1, 1, 22050);
+		const source = ctx.createBufferSource();
+		source.buffer = buffer;
+		source.connect(ctx.destination);
+		source.start(0);
+		recordAudioEvent("audio:silent_warmup", { state: ctx.state });
+	} catch (error) {
+		// Ignore errors - this is a best-effort unlock attempt
+		recordAudioEvent("audio:silent_warmup", {
+			state: ctx.state,
+			error: error instanceof Error ? error.message : String(error)
+		});
+	}
 }
 
 // Convenience functions for common audio events (like swing-analyzer pattern)
@@ -149,6 +172,7 @@ class AudioService {
 					}
 					this.resumeInProgress = true;
 					recordAudioEvent("audio:resuming", { trigger: "visibility", fromState: state });
+					playSilentBuffer(this.context);
 					withTimeout(this.context.resume(), RESUME_TIMEOUT_MS, "Resume timeout (visibility)")
 						.then(() => recordAudioResumed(this.context?.state ?? "unknown"))
 						.catch((err) => {
@@ -197,6 +221,9 @@ class AudioService {
 				try {
 					this.resumeInProgress = true;
 					recordAudioEvent("audio:resuming", { trigger: "gesture", fromState: state });
+					// Play silent buffer FIRST to "warm up" iOS Safari
+					// This is the proven pattern - resume() alone often fails on iOS
+					playSilentBuffer(ctx);
 					await withTimeout(ctx.resume(), RESUME_TIMEOUT_MS, "Resume timeout (gesture)");
 					recordAudioResumed(ctx.state);
 					// Don't remove listeners - iOS can re-interrupt anytime
@@ -235,6 +262,8 @@ class AudioService {
 		// Handle suspended or interrupted states
 		if (state === "suspended" || state === "interrupted") {
 			recordAudioEvent("audio:resuming", { trigger: "ensureRunning", fromState: state });
+			// Play silent buffer to warm up iOS Safari before resume
+			playSilentBuffer(ctx);
 			// Reuse existing unlock promise if one is in progress
 			if (!this.unlockPromise) {
 				this.resumeInProgress = true;
@@ -287,6 +316,7 @@ class AudioService {
 			}
 			recordAudioResuming(state);
 			this.resumeInProgress = true;
+			playSilentBuffer(ctx);
 			withTimeout(ctx.resume(), RESUME_TIMEOUT_MS, "Resume timeout (playBeep)")
 				.then(() => {
 					recordAudioResumed(ctx.state);
@@ -386,6 +416,7 @@ class AudioService {
 				} else {
 					this.resumeInProgress = true;
 					recordAudioResuming(ctx.state);
+					playSilentBuffer(ctx);
 					try {
 						await withTimeout(ctx.resume(), RESUME_TIMEOUT_MS, "Resume timeout (testSound)");
 						recordAudioResumed(ctx.state);
