@@ -18,8 +18,26 @@ import {
 	GIT_SHA,
 } from "../generated_version";
 
-// Repository for bug reports
+// App identification
+const APP_NAME = "igor-timer";
 const GITHUB_REPO = "idvorkin/igor-timer";
+
+// Generate memorable session name: appname-timestamp-word1-word2
+// Common, easy-to-remember words for quick identification
+const WORDS = [
+	"red", "blue", "green", "gold", "pink",
+	"sun", "moon", "star", "rain", "snow",
+	"cat", "dog", "bird", "fish", "bear",
+	"tree", "leaf", "rock", "wave", "fire",
+	"fast", "slow", "big", "tiny", "bold",
+];
+
+function generateSessionName(): string {
+	const timestamp = Date.now();
+	const word1 = WORDS[Math.floor(Math.random() * WORDS.length)];
+	const word2 = WORDS[Math.floor(Math.random() * WORDS.length)];
+	return `${APP_NAME}-${timestamp}-${word1}-${word2}`;
+}
 
 // Version info for bug reports
 const versionInfo = {
@@ -31,15 +49,29 @@ const versionInfo = {
 	buildTimestamp: BUILD_TIMESTAMP,
 };
 
-// Initialize Session Recorder
+// Initialize Session Recorder with memorable session name
+const sessionName = generateSessionName();
+
 export const sessionRecorder = new SessionRecorder({
+	dbName: `${APP_NAME}-sessions`,
 	buildInfo: {
-		version: versionInfo.shaShort,
+		version: `${APP_NAME}@${versionInfo.shaShort}`,
 		commit: GIT_SHA,
 		time: BUILD_TIMESTAMP,
 	},
 });
 sessionRecorder.start();
+
+// Record session start with memorable name for easy identification
+sessionRecorder.recordStateChange({
+	type: "session_start",
+	timestamp: Date.now(),
+	details: {
+		sessionName,
+		app: APP_NAME,
+		branch: GIT_BRANCH,
+	},
+});
 
 // Initialize Bug Reporter Service
 export const bugReporter = new BugReporterService({
