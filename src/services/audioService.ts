@@ -127,22 +127,38 @@ class AudioService {
 		type: OscillatorType = "sine",
 		volume = 0.7,
 	): void {
-		// Fire-and-forget pattern - we try to ensure running but don't block
-		// This works because the first beep is always triggered by user gesture
 		const ctx = this.getContext();
 		const state = ctx.state as AudioContextState;
 
-		// Try to resume if needed (within user gesture context)
+		// If context needs resuming, await it before playing
+		// This is critical - resume() is async and we must wait for it
 		if (state === "suspended" || state === "interrupted") {
-			ctx.resume().catch(() => {
-				// Silent fail - will retry on next beep
-			});
+			ctx.resume()
+				.then(() => this.doPlayBeep(ctx, frequency, duration, type, volume))
+				.catch((error) => {
+					console.warn("AudioContext resume failed in playBeep:", error);
+				});
+			return;
 		}
 
-		// Only play if context is running
+		// Context already running - play immediately
+		if (ctx.state === "running") {
+			this.doPlayBeep(ctx, frequency, duration, type, volume);
+		}
+	}
+
+	/**
+	 * Internal method to actually play the beep
+	 */
+	private doPlayBeep(
+		ctx: AudioContext,
+		frequency: number,
+		duration: number,
+		type: OscillatorType,
+		volume: number,
+	): void {
+		// Double-check context is still valid and running
 		if (ctx.state !== "running") {
-			// Context not ready - this can happen on very first load
-			// The unlock listeners will handle it, and next beep will work
 			return;
 		}
 
@@ -180,6 +196,61 @@ class AudioService {
 	 */
 	prime(): void {
 		this.getContext();
+	}
+
+	/**
+	 * Test sound - plays a recognizable beep and logs diagnostic info
+	 * Useful for debugging audio issues on iOS
+	 */
+	testSound(): { state: string; played: boolean; error?: string } {
+		const ctx = this.getContext();
+		const initialState = ctx.state;
+
+		console.log("[AudioService] Test sound requested", {
+			contextState: initialState,
+			contextExists: !!this.context,
+		});
+
+		try {
+			// Try to play immediately if running
+			if (ctx.state === "running") {
+				this.doPlayBeep(ctx, 440, 0.3, "sine", 0.8); // A4 note, 300ms
+				console.log("[AudioService] Test sound played successfully");
+				return { state: initialState, played: true };
+			}
+
+			// Try to resume and play
+			ctx.resume()
+				.then(() => {
+					console.log("[AudioService] Context resumed, state:", ctx.state);
+					if (ctx.state === "running") {
+						this.doPlayBeep(ctx, 440, 0.3, "sine", 0.8);
+						console.log("[AudioService] Test sound played after resume");
+					} else {
+						console.warn("[AudioService] Context not running after resume:", ctx.state);
+					}
+				})
+				.catch((error) => {
+					console.warn("[AudioService] Resume failed during test:", error);
+				});
+
+			return { state: initialState, played: false, error: "Resuming context..." };
+		} catch (error) {
+			const errorMsg = error instanceof Error ? error.message : String(error);
+			console.warn("[AudioService] Test sound failed:", errorMsg);
+			return { state: initialState, played: false, error: errorMsg };
+		}
+	}
+
+	/**
+	 * Get current audio context state for diagnostics
+	 */
+	getState(): { contextExists: boolean; state: string | null; unlockListenersAttached: boolean } {
+		return {
+			contextExists: !!this.context,
+			state: this.context?.state ?? null,
+			unlockListenersAttached: this.unlockListenersAttached,
+		};
 	}
 }
 

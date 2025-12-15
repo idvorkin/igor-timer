@@ -41,3 +41,5 @@ vite.config.d.ts
 screenshot.mjs
 *.png
 !public/*.png
+playwright-report/
+test-results/

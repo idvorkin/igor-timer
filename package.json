@@ -5,14 +5,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "node scripts/generate-version.js && vite",
+    "build": "node scripts/generate-version.js && tsc -b && vite build",
     "preview": "vite preview",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "node scripts/generate-version.js && vitest run",
+    "test:watch": "node scripts/generate-version.js && vitest",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "icons": "node scripts/generate-icons.js"
+    "icons": "node scripts/generate-icons.js",
+    "generate-version": "node scripts/generate-version.js"
   },
   "keywords": [
     "timer",
