@@ -41,25 +41,33 @@ generate-version:
     echo "export const GIT_BRANCH = \"$BRANCH\";" >> src/generated_version.ts
     echo "export const BUILD_TIMESTAMP = \"$BUILD_TIME\";" >> src/generated_version.ts
 
-# Run the development server (generates version first)
-dev: generate-version
-    npm run dev
+# Run the development server
+dev:
+    npm run dev-called-from-just
 
-# Build for production (generates version first)
-build: generate-version
-    npm run build
+# Build for production
+build:
+    npm run build-called-from-just
 
 # Preview production build
 preview:
     npm run preview
 
-# Run unit tests
-test:
-    npm run test
+# Run unit tests (depends on build)
+test: build
+    npm run test-called-from-just
 
 # Run tests in watch mode
 test-watch:
     npm run test:watch
+
+# Run E2E tests
+e2e:
+    npm run test:e2e
+
+# Run E2E tests with UI
+e2e-ui:
+    npm run test:e2e:ui
 
 # Generate PNG icons from SVG
 icons:
