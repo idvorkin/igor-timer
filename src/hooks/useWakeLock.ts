@@ -5,17 +5,16 @@ import { useCallback, useEffect, useRef } from "react";
 const SILENT_VIDEO_BASE64 =
 	"data:video/webm;base64,GkXfowEAAAAAAAAfQoaBAUL3gQFC8oEEQvOBCEKChHdlYm1Ch4EEQoWBAhhTgGcBAAAAAAAH4xFNm3RALE27i1OrhBVJqWZTrIHfTbuMU6uEFlSua1OsggEwTbuMU6uEHFO7a1OsggHL";
 
+// Detect iOS synchronously (before any effects run)
+const getIsIOS = () =>
+	typeof navigator !== "undefined" &&
+	(/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+		(navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
+
 export function useWakeLock() {
 	const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 	const videoRef = useRef<HTMLVideoElement | null>(null);
-	const isIOS = useRef<boolean>(false);
-
-	// Detect iOS on first render
-	useEffect(() => {
-		isIOS.current =
-			/iPad|iPhone|iPod/.test(navigator.userAgent) ||
-			(navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-	}, []);
+	const isIOS = useRef<boolean>(getIsIOS());
 
 	// Create video element for iOS fallback
 	const createVideoElement = useCallback(() => {
